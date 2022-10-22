@@ -11,8 +11,8 @@ var {
   getStatusCode,
 } = require("http-status-codes");
 
-var indexRouter = require("./routes/index");
-var usersRouter = require("./routes/users");
+var activityGroupsRouter = require("./routes/activity-groups");
+var todoItemsRouter = require("./routes/todo-items");
 
 var app = express();
 
@@ -26,8 +26,8 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/", indexRouter);
-app.use("/users", usersRouter);
+app.use("/activity-groups", activityGroupsRouter);
+app.use("/todo-items", todoItemsRouter);
 
 // catch 404 and forward to error handler
 app.use(function (req, res, next) {
