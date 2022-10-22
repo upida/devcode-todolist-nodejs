@@ -96,11 +96,12 @@ router.delete("/activity-groups/:id", function (req, res, next) {
     .first()
     .then((activities) => {
       if (!activities)
-        return res.status(404).json({
-          status: "Not found",
-          message: "Activity with ID " + id + " Not Found",
-          data: {},
-        });
+        next(
+          createError(404, {
+            message: "Activity with ID " + id + " Not Found",
+            data: {},
+          })
+        );
 
       knex("activities")
         .where("id", "=", id)
@@ -132,11 +133,12 @@ router.patch("/activity-groups/:id", function (req, res, next) {
     .first()
     .then((activities) => {
       if (!activities)
-        return res.status(404).json({
-          status: "Not found",
-          message: "Activity with ID " + id + " Not Found",
-          data: {},
-        });
+        next(
+          createError(404, {
+            message: "Activity with ID " + id + " Not Found",
+            data: {},
+          })
+        );
 
       knex("activities")
         .where("id", "=", id)
@@ -224,11 +226,12 @@ router.post(
       .first()
       .then((items) => {
         if (!items) {
-          return res.status(404).json({
-            status: "Bad request",
-            message: "Activity not found",
-            data: {},
-          });
+          next(
+            createError(404, {
+              message: "Activity not found",
+              data: {},
+            })
+          );
         }
       })
       .catch((err) => {
@@ -277,11 +280,12 @@ router.delete("/todo-items/:id", function (req, res, next) {
     .first()
     .then((items) => {
       if (!items)
-        return res.status(404).json({
-          status: "Not found",
-          message: "Item with ID " + id + " Not Found",
-          data: {},
-        });
+        next(
+          createError(404, {
+            message: "Item with ID " + id + " Not Found",
+            data: {},
+          })
+        );
 
       knex("items")
         .where("id", "=", id)
@@ -315,11 +319,12 @@ router.patch("/todo-items/:id", function (req, res, next) {
     .first()
     .then((items) => {
       if (!items)
-        return res.status(404).json({
-          status: "Not found",
-          message: "Item with ID " + id + " Not Found",
-          data: {},
-        });
+        next(
+          createError(404, {
+            message: "Item with ID " + id + " Not Found",
+            data: {},
+          })
+        );
 
       knex("items")
         .where("id", "=", id)

@@ -4,6 +4,12 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
+var {
+  ReasonPhrases,
+  StatusCodes,
+  getReasonPhrase,
+  getStatusCode,
+} = require("http-status-codes");
 
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users");
@@ -37,7 +43,9 @@ app.use(function (err, req, res, next) {
   // render the error page
   res.status(err.status || 500);
   res.json({
-    status: err.message,
+    status: getReasonPhrase(err.status),
+    message: err.message,
+    data: err.data,
   });
 });
 
