@@ -52,12 +52,16 @@ router.get("/activity-groups/:id", function (req, res, next) {
 
 router.post(
   "/activity-groups",
-  body("title").isLength({ min: 1 }).withMessage("Title cannot be null"),
+  body("title").isLength({ min: 1 }).withMessage("title cannot be null"),
   body("email").isEmail().withMessage("Invalid value"),
   function (req, res, next) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      next(
+        createError(400, {
+          data: errors.array(),
+        })
+      );
     }
 
     var title = req.body.title;
@@ -207,12 +211,16 @@ router.post(
   "/todo-items",
   body("activity_group_id")
     .isLength({ min: 1 })
-    .withMessage("Activity group cannot be null"),
-  body("title").isLength({ min: 1 }).withMessage("Title cannot be null"),
+    .withMessage("activity_group_id cannot be null"),
+  body("title").isLength({ min: 1 }).withMessage("title cannot be null"),
   function (req, res, next) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      return res.status(400).json({ errors: errors.array() });
+      next(
+        createError(400, {
+          data: errors.array(),
+        })
+      );
     }
 
     var insert = {
