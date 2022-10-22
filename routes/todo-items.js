@@ -1,6 +1,7 @@
 var createError = require("http-errors");
 var express = require("express");
 const knex = require("../db");
+const { dateformat_current } = require("../utils");
 
 const { body, validationResult } = require("express-validator");
 const { response } = require("../app");
@@ -9,7 +10,7 @@ const { json } = require("express");
 var router = express.Router();
 
 router.get("/", function (req, res, next) {
-  var query = knex.select().table("items");
+  var query = knex.select().table("todos");
   if (Object.keys(req.query).length) query = query.where(req.query);
 
   query
@@ -21,15 +22,24 @@ router.get("/", function (req, res, next) {
       });
     })
     .catch((err) => {
-      next(createError(500));
+      return next(createError(500, { err }));
     });
 });
 
 router.get("/:id", function (req, res, next) {
   var id = req.params.id;
-  knex("items")
+  knex("todos")
     .where("id", id)
+    .first()
     .then((items) => {
+      if (!items)
+        return next(
+          createError(404, {
+            message: "Todo with ID " + id + " Not Found",
+            data: {},
+          })
+        );
+
       return res.json({
         status: "Success",
         message: "Success",
@@ -37,7 +47,7 @@ router.get("/:id", function (req, res, next) {
       });
     })
     .catch((err) => {
-      next(createError(500));
+      return next(createError(500, { err }));
     });
 });
 
@@ -50,25 +60,36 @@ router.post(
   function (req, res, next) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      next(
+      return next(
         createError(400, {
-          data: errors.array(),
+          message: errors.array()[0].msg,
+          data: {},
         })
       );
     }
 
+    var created_at = req.body.created_at
+      ? req.body.created_at
+      : dateformat_current();
+    var updated_at = req.body.updated_at
+      ? req.body.updated_at
+      : dateformat_current();
+    var priority = req.body.priority ? req.body.priority : "very-high";
+
     var insert = {
       activity_group_id: req.body.activity_group_id,
       title: req.body.title,
+      priority,
+      created_at,
+      updated_at,
     };
-    if (req.body.priority) insert.priority = req.body.priority;
 
     knex("activities")
       .where("id", "=", req.body.activity_group_id)
       .first()
       .then((items) => {
         if (!items) {
-          next(
+          return next(
             createError(404, {
               message: "Activity not found",
               data: {},
@@ -77,14 +98,14 @@ router.post(
         }
       })
       .catch((err) => {
-        next(createError(500));
+        return next(createError(500, { err }));
       });
 
-    knex("items")
+    knex("todos")
       .insert(insert)
       .returning("id")
       .then((id) => {
-        knex("items")
+        knex("todos")
           .select(
             "id",
             "title",
@@ -105,11 +126,11 @@ router.post(
             });
           })
           .catch((err) => {
-            next(createError(500));
+            return next(createError(500, { err }));
           });
       })
       .catch((err) => {
-        next(createError(500));
+        return next(createError(500, { err }));
       });
   }
 );
@@ -117,19 +138,19 @@ router.post(
 router.delete("/:id", function (req, res, next) {
   var id = req.params.id;
 
-  knex("items")
+  knex("todos")
     .where("id", "=", id)
     .first()
     .then((items) => {
       if (!items)
-        next(
+        return next(
           createError(404, {
-            message: "Item with ID " + id + " Not Found",
+            message: "Todo with ID " + id + " Not Found",
             data: {},
           })
         );
 
-      knex("items")
+      knex("todos")
         .where("id", "=", id)
         .del()
         .then((response) => {
@@ -140,11 +161,11 @@ router.delete("/:id", function (req, res, next) {
           });
         })
         .catch((err) => {
-          next(createError[500]);
+          return next(createError(500, { err }));
         });
     })
     .catch((err) => {
-      next(createError(500));
+      return next(createError(500, { err }));
     });
 });
 
@@ -154,25 +175,30 @@ router.patch("/:id", function (req, res, next) {
   if (req.body.title) update.title = req.body.title;
   if (!isNaN(req.body.is_active))
     update.is_active = req.body.is_active.toString();
+  if (typeof req.body.is_active == "boolean") {
+    update.is_active = req.body.is_active ? "1" : "0";
+  }
   if (req.body.priority) update.priority = req.body.priority;
 
-  knex("items")
+  update.updated_at = dateformat_current();
+
+  knex("todos")
     .where("id", "=", id)
     .first()
     .then((items) => {
       if (!items)
-        next(
+        return next(
           createError(404, {
-            message: "Item with ID " + id + " Not Found",
+            message: "Todo with ID " + id + " Not Found",
             data: {},
           })
         );
 
-      knex("items")
+      knex("todos")
         .where("id", "=", id)
         .update(update)
         .then((response) => {
-          knex("items")
+          knex("todos")
             .select(
               "id",
               "title",
@@ -185,22 +211,22 @@ router.patch("/:id", function (req, res, next) {
             .where("id", "=", id)
             .first()
             .then((items) => {
-              return res.status(201).json({
+              return res.status(200).json({
                 status: "Success",
                 message: "Success",
                 data: items,
               });
             })
             .catch((err) => {
-              next(createError(500));
+              return next(createError(500, { err }));
             });
         })
         .catch((err) => {
-          next(createError[500]);
+          return next(createError(500, { err }));
         });
     })
     .catch((err) => {
-      next(createError(500));
+      return next(createError(500, { err }));
     });
 });
 

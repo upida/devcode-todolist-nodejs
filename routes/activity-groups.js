@@ -1,6 +1,7 @@
 var createError = require("http-errors");
 var express = require("express");
 const knex = require("../db");
+const { dateformat_current } = require("../utils");
 
 const { body, validationResult } = require("express-validator");
 const { response } = require("../app");
@@ -20,7 +21,7 @@ router.get("/", function (req, res, next) {
       });
     })
     .catch((err) => {
-      next(createError(500));
+      return next(createError(500, { err }));
     });
 });
 
@@ -28,7 +29,16 @@ router.get("/:id", function (req, res, next) {
   var id = req.params.id;
   knex("activities")
     .where("id", id)
+    .first()
     .then((activities) => {
+      if (!activities)
+        return next(
+          createError(404, {
+            message: "Activity with ID " + id + " Not Found",
+            data: {},
+          })
+        );
+
       return res.json({
         status: "Success",
         message: "Success",
@@ -36,7 +46,7 @@ router.get("/:id", function (req, res, next) {
       });
     })
     .catch((err) => {
-      next(createError(500));
+      return next(createError(500, { err }));
     });
 });
 
@@ -47,18 +57,25 @@ router.post(
   function (req, res, next) {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {
-      next(
+      return next(
         createError(400, {
-          data: errors.array(),
+          message: errors.array()[0].msg,
+          data: {},
         })
       );
     }
 
     var title = req.body.title;
     var email = req.body.email;
+    var created_at = req.body.created_at
+      ? req.body.created_at
+      : dateformat_current();
+    var updated_at = req.body.updated_at
+      ? req.body.updated_at
+      : dateformat_current();
 
     knex("activities")
-      .insert({ title, email })
+      .insert({ title, email, created_at, updated_at })
       .returning("id")
       .then((id) => {
         knex("activities")
@@ -73,11 +90,11 @@ router.post(
             });
           })
           .catch((err) => {
-            next(createError(500));
+            return next(createError(500, { err }));
           });
       })
       .catch((err) => {
-        next(createError(500));
+        return next(createError(500, { err }));
       });
   }
 );
@@ -90,7 +107,7 @@ router.delete("/:id", function (req, res, next) {
     .first()
     .then((activities) => {
       if (!activities)
-        next(
+        return next(
           createError(404, {
             message: "Activity with ID " + id + " Not Found",
             data: {},
@@ -108,11 +125,11 @@ router.delete("/:id", function (req, res, next) {
           });
         })
         .catch((err) => {
-          next(createError[500]);
+          return next(createError(500, { err }));
         });
     })
     .catch((err) => {
-      next(createError(500));
+      return next(createError(500, { err }));
     });
 });
 
@@ -122,12 +139,14 @@ router.patch("/:id", function (req, res, next) {
   if (req.body.title) update.title = req.body.title;
   if (req.body.email) update.email = req.body.email;
 
+  update.updated_at = dateformat_current();
+
   knex("activities")
     .where("id", "=", id)
     .first()
     .then((activities) => {
       if (!activities)
-        next(
+        return next(
           createError(404, {
             message: "Activity with ID " + id + " Not Found",
             data: {},
@@ -143,22 +162,22 @@ router.patch("/:id", function (req, res, next) {
             .where("id", "=", id)
             .first()
             .then((activities) => {
-              return res.status(201).json({
+              return res.status(200).json({
                 status: "Success",
                 message: "Success",
                 data: activities,
               });
             })
             .catch((err) => {
-              next(createError(500));
+              return next(createError(500, { err }));
             });
         })
         .catch((err) => {
-          next(createError[500]);
+          return next(createError(500, { err }));
         });
     })
     .catch((err) => {
-      next(createError(500));
+      return next(createError(500, { err }));
     });
 });
 

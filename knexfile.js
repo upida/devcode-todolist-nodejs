@@ -1,4 +1,11 @@
-const knex = require("knex")({
+// Update with your config settings.
+
+require("dotenv").config();
+
+/**
+ * @type { Object.<string, import("knex").Knex.Config> }
+ */
+module.exports = {
   client: "mysql2",
   connection: {
     host: process.env.MYSQL_HOST,
@@ -7,14 +14,7 @@ const knex = require("knex")({
     password: process.env.MYSQL_PASSWORD,
     database: process.env.MYSQL_DBNAME,
   },
-  log: {
-    warn(message) {},
-    error(message) {
-      console.error(message);
-    },
-    deprecate(message) {},
-    debug(message) {},
+  migrations: {
+    directory: "./db/migrations",
   },
-});
-
-module.exports = knex;
+};
